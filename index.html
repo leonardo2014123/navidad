@@ -222,19 +222,20 @@ function escribirLinea() {
             elemento.innerHTML += line.charAt(charIndex);
             charIndex++;
         }
-        setTimeout(escribirLinea, 90);
+        setTimeout(escribirLinea, 50);
     } else {
         elemento.innerHTML += "<br>";
         lineIndex++;
         charIndex = 0;
-        setTimeout(escribirLinea, 300);
+        setTimeout(escribirLinea, 250);
     }
 }
 
-setTimeout(escribirLinea, 1200);
+setTimeout(escribirLinea, 3000);
 </script>
 
 </body>
 </html>
+
 
 
