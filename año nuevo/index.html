@@ -83,19 +83,6 @@ p {
     font-family: Montserrat;
     opacity: 0.7;
 }
-
-/* ===== CRONOMETRO ===== */
-#cronometro {
-    position: fixed;
-    bottom: 80px;
-    width: 100%;
-    text-align: center;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 2rem;
-    color: gold;
-    text-shadow: 0 0 10px #ffd700;
-    opacity: 0.9;
-}
 </style>
 </head>
 
@@ -109,7 +96,6 @@ p {
 </div>
 
 <div class="inicio" id="inicio">✨ Haz click para empezar ✨</div>
-<div id="cronometro"></div>
 
 <audio id="musica" loop src="anio_nuevo.mp3"></audio>
 <audio id="launchSound" src="lanzamiento.mp3"></audio>
@@ -280,48 +266,12 @@ function escribir() {
     }
 }
 
-/* ===== CRONOMETRO ===== */
-const cronometro = document.getElementById("cronometro");
-
-function actualizarCronometro() {
-    const ahora = new Date();
-    let medianoche = new Date();
-    medianoche.setHours(0,0,0,0);
-    if (ahora >= medianoche) medianoche.setDate(medianoche.getDate() + 1);
-
-    let diff = medianoche - ahora;
-
-    const horas = Math.floor(diff / 1000 / 60 / 60);
-    const minutos = Math.floor((diff / 1000 / 60) % 60);
-    const segundos = Math.floor((diff / 1000) % 60);
-
-    cronometro.textContent = `⏳ ${horas.toString().padStart(2,'0')} : ${minutos.toString().padStart(2,'0')} : ${segundos.toString().padStart(2,'0')}`;
-
-    setTimeout(actualizarCronometro, 500);
-}
-
-actualizarCronometro();
-
-/* ===== INICIO CON CONTROL DE MEDIANOCHE ===== */
+/* ===== INICIO SIN CRONOMETRO ===== */
 document.body.addEventListener("click", () => {
     if (started) return;
 
-    const ahora = new Date();
-    let medianoche = new Date();
-    medianoche.setHours(0,0,0,0);
-    if (ahora >= medianoche) medianoche.setDate(medianoche.getDate() + 1);
-
-    if (ahora < medianoche) {
-        // Antes de medianoche
-        subtitulo.textContent = "¡No hagas trampa xD! Espera a medianoche...";
-        subtitulo.style.opacity = 1;
-        return;
-    }
-
-    // Después de medianoche, iniciamos la animación
     started = true;
     inicio.style.display = "none";
-    cronometro.style.display = "none";
     mensaje.classList.add("mostrar");
     titulo.innerHTML = "¡Feliz Año Nuevo!<br>AME";
     escribir();
