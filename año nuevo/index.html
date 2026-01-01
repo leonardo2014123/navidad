@@ -61,18 +61,10 @@ p {
     opacity: 0.95;
     margin: 0;
     padding: 14px 22px;
-
-    background: linear-gradient(
-        to right,
-        rgba(255,255,255,0.08),
-        rgba(255,255,255,0.02)
-    );
+    background: linear-gradient(to right, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
     border-radius: 18px;
     backdrop-filter: blur(4px);
-
-    text-shadow:
-        0 0 8px rgba(255,255,255,0.15),
-        0 0 18px rgba(255,215,0,0.08);
+    text-shadow: 0 0 8px rgba(255,255,255,0.15), 0 0 18px rgba(255,215,0,0.08);
 }
 
 /* ===== TEXTO INICIAL ===== */
@@ -84,6 +76,26 @@ p {
     color: white;
     font-family: Montserrat;
     opacity: 0.7;
+}
+
+/* ===== MENSAJE FLOTANTE ===== */
+.noTrampa {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    color: #ff4d4d;
+    background: rgba(0,0,0,0.6);
+    padding: 20px 35px;
+    border-radius: 12px;
+    opacity: 0;
+    z-index: 20;
+    transition: opacity 0.5s ease;
+}
+.noTrampa.mostrar {
+    opacity: 1;
 }
 </style>
 </head>
@@ -98,6 +110,7 @@ p {
 </div>
 
 <div class="inicio" id="inicio">✨ Haz click para empezar ✨</div>
+<div class="noTrampa" id="noTrampa">¡No hagas trampa xD! Espera a medianoche 🎇</div>
 
 <audio id="musica" loop src="anio_nuevo.mp3"></audio>
 <audio id="launchSound" src="lanzamiento.mp3"></audio>
@@ -252,6 +265,7 @@ que este año sea tan intenso que incluso la noche quiera quedarse despierta con
 y por más Mobile Legends xD`;
 
 let i = 0;
+const subtitulo = document.getElementById("subtitulo");
 subtitulo.style.opacity = 0;
 subtitulo.style.transform = "translateY(20px)";
 
@@ -268,15 +282,38 @@ function escribir() {
     }
 }
 
-/* ===== INICIO ===== */
+/* ===== INICIO CON CONTROL DE MEDIANOCHE ===== */
+const inicio = document.getElementById("inicio");
+const mensaje = document.getElementById("mensaje");
+const noTrampa = document.getElementById("noTrampa");
+const musica = document.getElementById("musica");
+const launchSound = document.getElementById("launchSound");
+const boomSound = document.getElementById("boomSound");
+
 document.body.addEventListener("click", () => {
     if (started) return;
+
+    const ahora = new Date();
+    const medianoche = new Date();
+    medianoche.setHours(0, 0, 0, 0);
+    if (ahora < medianoche) medianoche.setDate(medianoche.getDate() + 1);
+
+    const tiempoRestante = medianoche - ahora;
+
+    if (tiempoRestante > 0) {
+        // Mostrar mensaje flotante "No hagas trampa"
+        noTrampa.classList.add("mostrar");
+        setTimeout(() => noTrampa.classList.remove("mostrar"), 2000);
+        return;
+    }
+
+    // Después de medianoche
     started = true;
 
     inicio.style.display = "none";
     mensaje.classList.add("mostrar");
 
-    titulo.innerHTML = "¡Feliz Año Nuevo!<br>AME";
+    document.getElementById("titulo").innerHTML = "¡Feliz Año Nuevo!<br>AME";
     escribir();
     musica.play();
 
@@ -292,3 +329,5 @@ document.body.addEventListener("click", () => {
 
 </body>
 </html>
+
+
