@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎆 Feliz Año Nuevo 🎆</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@300;500&display=swap" rel="stylesheet">
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+canvas {
+    display: block;
+}
+
+/* ===== CONTENEDOR MENSAJE ===== */
+.mensaje {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+    z-index: 10;
+    color: white;
+    padding: 20px;
+    width: min(92vw, 900px);
+}
+
+.mensaje.mostrar {
+    opacity: 1;
+}
+
+/* ===== TITULO ===== */
+h1 {
+    font-family: 'Great Vibes', cursive;
+    font-size: clamp(3.8rem, 10vw, 6.5rem);
+    line-height: 1.25;
+    margin: 0 0 28px 0;
+    padding: 15px 10px;
+    background: linear-gradient(120deg, #fff, #ffd700, #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 45px rgba(255,215,0,0.9);
+}
+
+/* ===== MENSAJE PRINCIPAL ===== */
+p {
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(1.3rem, 3.4vw, 1.65rem);
+    line-height: 1.85;
+    white-space: pre-line;
+    opacity: 0.95;
+    margin: 0;
+    padding: 14px 22px;
+
+    background: linear-gradient(
+        to right,
+        rgba(255,255,255,0.08),
+        rgba(255,255,255,0.02)
+    );
+    border-radius: 18px;
+    backdrop-filter: blur(4px);
+
+    text-shadow:
+        0 0 8px rgba(255,255,255,0.15),
+        0 0 18px rgba(255,215,0,0.08);
+}
+
+/* ===== TEXTO INICIAL ===== */
+.inicio {
+    position: fixed;
+    bottom: 40px;
+    width: 100%;
+    text-align: center;
+    color: white;
+    font-family: Montserrat;
+    opacity: 0.7;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div class="mensaje" id="mensaje">
+    <h1 id="titulo"></h1>
+    <p id="subtitulo"></p>
+</div>
+
+<div class="inicio" id="inicio">✨ Haz click para empezar ✨</div>
+
+<audio id="musica" loop src="anio_nuevo.mp3"></audio>
+<audio id="launchSound" src="lanzamiento.mp3"></audio>
+<audio id="boomSound" src="explosion.mp3"></audio>
+
+<script>
+/* ===== CANVAS ===== */
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+const gravity = 0.05;
+let fireworks = [];
+let particles = [];
+let started = false;
+
+/* ===== FUEGO ===== */
+class Firework {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.targetY = canvas.height * (0.2 + Math.random() * 0.35);
+        this.y = canvas.height;
+        this.vy = -(Math.random() * 5 + 7);
+        this.exploded = false;
+        launchSound.currentTime = 0;
+        launchSound.play();
+    }
+    update() {
+        this.y += this.vy;
+        this.vy += gravity;
+        if (this.y <= this.targetY && !this.exploded) {
+            this.exploded = true;
+            explode(this.x, this.y);
+        }
+    }
+    draw() {
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+/* ===== PARTICULAS ===== */
+class Particle {
+    constructor(x, y, angle, speed, color, spread, glow) {
+        this.x = x;
+        this.y = y;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.spread = spread;
+        this.life = 160;
+        this.alpha = 1;
+        this.baseLength = Math.random() * 10 + 14;
+        this.length = this.baseLength;
+        this.color = color;
+        this.glow = glow;
+    }
+    update() {
+        let bend = 1 - this.life / 160;
+        this.vx += this.spread * (1 + bend * 0.5);
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += gravity * 0.35;
+        this.vx *= 0.99;
+        this.vy *= 0.985;
+        this.alpha -= 0.006;
+        this.life--;
+        this.length = this.baseLength * (this.life / 160);
+    }
+    draw() {
+        ctx.strokeStyle = `rgba(${this.color},${this.alpha})`;
+        ctx.lineWidth = 0.7;
+        ctx.shadowBlur = this.glow * this.alpha;
+        ctx.shadowColor = `rgba(${this.color},${this.alpha})`;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x - this.vx * this.length, this.y - this.vy * this.length);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+}
+
+/* ===== EXPLOSION ===== */
+function explode(x, y) {
+    boomSound.currentTime = 0;
+    boomSound.play();
+
+    const rings = Math.random() < 0.3 ? 4 : 3;
+    const count = rings === 4 ? 60 : 45;
+    const speed = rings === 4 ? 2.4 : 2;
+
+    const baseHue = Math.random() * 360;
+
+    for (let r = 1; r <= rings; r++) {
+        for (let i = 0; i < count; i++) {
+            const angle = (Math.PI * 2 / count) * i;
+            const spread = (Math.random() - 0.5) * 0.02;
+            const hue = baseHue + Math.random() * 25 - 12;
+            const color = hslToRgb(hue, 100, 60);
+            const glow = 25 + Math.random() * 20;
+            particles.push(new Particle(x, y, angle, speed * r, color, spread, glow));
+        }
+    }
+}
+
+/* ===== COLOR ===== */
+function hslToRgb(h, s, l) {
+    s /= 100; l /= 100;
+    const k = n => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    return `${Math.round(255 * f(0))},${Math.round(255 * f(8))},${Math.round(255 * f(4))}`;
+}
+
+/* ===== ANIMACION ===== */
+function animate() {
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    fireworks.forEach((f, i) => {
+        f.update();
+        f.draw();
+        if (f.exploded) fireworks.splice(i, 1);
+    });
+
+    particles.forEach((p, i) => {
+        p.update();
+        p.draw();
+        if (p.life <= 0) particles.splice(i, 1);
+    });
+
+    requestAnimationFrame(animate);
+}
+
+/* ===== TEXTO EXACTO ===== */
+const texto = 
+`Que tus días en 2026 tengan más luces que sombras, 
+más misterios que certezas
+y que tus metas sean tan seductoras 
+como secretos que nadie se atreve a descubrir 🖤
+
+¡Brinda, baila, sueña 
+que este año sea tan intenso que incluso la noche quiera quedarse despierta contigo! 🥂 
+
+y por más Mobile Legends xD`;
+
+let i = 0;
+subtitulo.style.opacity = 0;
+subtitulo.style.transform = "translateY(20px)";
+
+function escribir() {
+    if (i === 0) {
+        subtitulo.style.transition = "0.8s ease";
+        subtitulo.style.opacity = 1;
+        subtitulo.style.transform = "translateY(0)";
+    }
+    if (i < texto.length) {
+        subtitulo.textContent += texto[i];
+        i++;
+        setTimeout(escribir, 42);
+    }
+}
+
+/* ===== INICIO ===== */
+document.body.addEventListener("click", () => {
+    if (started) return;
+    started = true;
+
+    inicio.style.display = "none";
+    mensaje.classList.add("mostrar");
+
+    titulo.innerHTML = "¡Feliz Año Nuevo!<br>AME";
+    escribir();
+    musica.play();
+
+    function launchBeat() {
+        fireworks.push(new Firework());
+        setTimeout(launchBeat, 850 + Math.random() * 500);
+    }
+
+    launchBeat();
+    animate();
+});
+</script>
+
+</body>
+</html>
