@@ -28,11 +28,12 @@ canvas {
     transform: translate(-50%, -50%);
     text-align: center;
     opacity: 0;
-    transition: opacity 1.5s ease;
+    transition: opacity 1s ease;
     z-index: 10;
     color: white;
-    padding: 20px;
-    width: min(92vw, 900px);
+    padding: 15px;
+    width: 90vw;
+    max-width: 600px;
 }
 
 .mensaje.mostrar {
@@ -42,46 +43,43 @@ canvas {
 /* ===== TITULO ===== */
 h1 {
     font-family: 'Great Vibes', cursive;
-    font-size: clamp(3.8rem, 10vw, 6.5rem);
-    line-height: 1.25;
-    margin: 0 0 28px 0;
-    padding: 15px 10px;
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    line-height: 1.2;
+    margin: 0 0 15px 0;
+    padding: 10px;
     background: linear-gradient(120deg, #fff, #ffd700, #fff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 45px rgba(255,215,0,0.9);
+    text-shadow: 0 0 30px rgba(255,215,0,0.8);
 }
 
 /* ===== MENSAJE PRINCIPAL ===== */
 p {
     font-family: 'Montserrat', sans-serif;
-    font-size: clamp(1.3rem, 3.4vw, 1.65rem);
-    line-height: 1.85;
+    font-size: clamp(1rem, 3vw, 1.3rem);
+    line-height: 1.5;
     white-space: pre-line;
     opacity: 0.95;
     margin: 0;
-    padding: 14px 22px;
-    background: linear-gradient(
-        to right,
-        rgba(255,255,255,0.08),
-        rgba(255,255,255,0.02)
-    );
-    border-radius: 18px;
+    padding: 10px 15px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
     backdrop-filter: blur(4px);
     text-shadow:
-        0 0 8px rgba(255,255,255,0.15),
-        0 0 18px rgba(255,215,0,0.08);
+        0 0 6px rgba(255,255,255,0.1),
+        0 0 12px rgba(255,215,0,0.05);
 }
 
 /* ===== TEXTO INICIAL ===== */
 .inicio {
     position: fixed;
-    bottom: 40px;
+    bottom: 20px;
     width: 100%;
     text-align: center;
     color: white;
     font-family: Montserrat;
     opacity: 0.7;
+    font-size: 1rem;
 }
 </style>
 </head>
@@ -153,28 +151,28 @@ class Particle {
         this.vx = Math.cos(angle) * speed;
         this.vy = Math.sin(angle) * speed;
         this.spread = spread;
-        this.life = 160;
+        this.life = 120; // menos vida para mejorar rendimiento
         this.alpha = 1;
-        this.baseLength = Math.random() * 10 + 14;
+        this.baseLength = Math.random() * 8 + 10; // más corto
         this.length = this.baseLength;
         this.color = color;
         this.glow = glow;
     }
     update() {
-        let bend = 1 - this.life / 160;
+        let bend = 1 - this.life / 120;
         this.vx += this.spread * (1 + bend * 0.5);
         this.x += this.vx;
         this.y += this.vy;
         this.vy += gravity * 0.35;
         this.vx *= 0.99;
         this.vy *= 0.985;
-        this.alpha -= 0.006;
+        this.alpha -= 0.008; // más rápido para quitar partículas rápido
         this.life--;
-        this.length = this.baseLength * (this.life / 160);
+        this.length = this.baseLength * (this.life / 120);
     }
     draw() {
         ctx.strokeStyle = `rgba(${this.color},${this.alpha})`;
-        ctx.lineWidth = 0.7;
+        ctx.lineWidth = 0.6;
         ctx.shadowBlur = this.glow * this.alpha;
         ctx.shadowColor = `rgba(${this.color},${this.alpha})`;
         ctx.beginPath();
@@ -190,9 +188,9 @@ function explode(x, y) {
     boomSound.currentTime = 0;
     boomSound.play();
 
-    const rings = Math.random() < 0.3 ? 4 : 3;
-    const count = rings === 4 ? 60 : 45;
-    const speed = rings === 4 ? 2.4 : 2;
+    const rings = Math.random() < 0.3 ? 3 : 2; // menos partículas en móvil
+    const count = rings === 3 ? 40 : 25;
+    const speed = rings === 3 ? 2 : 1.5;
 
     const baseHue = Math.random() * 360;
 
@@ -202,7 +200,7 @@ function explode(x, y) {
             const spread = (Math.random() - 0.5) * 0.02;
             const hue = baseHue + Math.random() * 25 - 12;
             const color = hslToRgb(hue, 100, 60);
-            const glow = 25 + Math.random() * 20;
+            const glow = 15 + Math.random() * 15;
             particles.push(new Particle(x, y, angle, speed * r, color, spread, glow));
         }
     }
@@ -254,15 +252,22 @@ subtitulo.style.opacity = 0;
 subtitulo.style.transform = "translateY(20px)";
 
 function escribir() {
-    if (i === 0) {
-        subtitulo.style.transition = "0.8s ease";
+    // Para móviles, mostrar todo el texto de golpe
+    if(window.innerWidth < 768){
+        subtitulo.textContent = texto;
         subtitulo.style.opacity = 1;
         subtitulo.style.transform = "translateY(0)";
-    }
-    if (i < texto.length) {
-        subtitulo.textContent += texto[i];
-        i++;
-        setTimeout(escribir, 42);
+    } else {
+        if (i === 0) {
+            subtitulo.style.transition = "0.8s ease";
+            subtitulo.style.opacity = 1;
+            subtitulo.style.transform = "translateY(0)";
+        }
+        if (i < texto.length) {
+            subtitulo.textContent += texto[i];
+            i++;
+            setTimeout(escribir, 42);
+        }
     }
 }
 
@@ -279,7 +284,7 @@ document.body.addEventListener("click", () => {
 
     function launchBeat() {
         fireworks.push(new Firework());
-        setTimeout(launchBeat, 850 + Math.random() * 500);
+        setTimeout(launchBeat, 800 + Math.random() * 400);
     }
 
     launchBeat();
@@ -289,7 +294,6 @@ document.body.addEventListener("click", () => {
 
 </body>
 </html>
-
 
 
 
